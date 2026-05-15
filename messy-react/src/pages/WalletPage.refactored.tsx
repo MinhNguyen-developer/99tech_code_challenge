@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 
 // ── Types ──────────────────────────────────────────────
+type Blockchain = "Osmosis" | "Ethereum" | "Arbitrum" | "Zilliqa" | "Neo";
+
 interface WalletBalance {
   currency: string;
   amount: number;
-  blockchain: string; // was missing from the original type
+  blockchain: Blockchain; // was missing from the original type
 }
 
 interface FormattedWalletBalance extends WalletBalance {
@@ -18,7 +20,7 @@ interface FormattedWalletBalance extends WalletBalance {
 // import { BoxProps } from "../types";
 
 // ── Pure helper moved outside the component (no closure dependencies) ──
-const BLOCKCHAIN_PRIORITY: Record<string, number> = {
+const BLOCKCHAIN_PRIORITY: Record<Blockchain, number> = {
   Osmosis: 100,
   Ethereum: 50,
   Arbitrum: 30,
@@ -26,14 +28,16 @@ const BLOCKCHAIN_PRIORITY: Record<string, number> = {
   Neo: 20,
 };
 
-const getPriority = (blockchain: string): number =>
+const getPriority = (blockchain: Blockchain): number =>
   BLOCKCHAIN_PRIORITY[blockchain] ?? -99;
 
 // ── Component ──────────────────────────────────────────
-interface Props extends BoxProps {}
+interface Props extends BoxProps {
+  // No additional props for now, but this allows for future extension.
+}
 
 const WalletPage: React.FC<Props> = ({ children: _children, ...rest }) => {
-  const balances = useWalletBalances();
+  const balances: WalletBalance[] = useWalletBalances();
   const prices = usePrices();
 
   // 1. Filter → sort → format in a single memoised pass.
@@ -41,13 +45,12 @@ const WalletPage: React.FC<Props> = ({ children: _children, ...rest }) => {
   const rows = useMemo(() => {
     return balances
       .filter(
-        (b: WalletBalance) => getPriority(b.blockchain) > -99 && b.amount > 0, // fix: keep positive balances
+        (b) => getPriority(b.blockchain) > -99 && b.amount > 0, // fix: keep positive balances
       )
       .sort(
-        (a: WalletBalance, b: WalletBalance) =>
-          getPriority(b.blockchain) - getPriority(a.blockchain), // fix: always returns a number
+        (a, b) => getPriority(b.blockchain) - getPriority(a.blockchain), // fix: always returns a number
       )
-      .map((balance: WalletBalance): FormattedWalletBalance => {
+      .map((balance): FormattedWalletBalance => {
         const price = prices[balance.currency] ?? 0;
         return {
           ...balance,

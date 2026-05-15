@@ -28,7 +28,9 @@ interface FormattedWalletBalance {
   formatted: string;
 }
 
+// Props extends is not strictly necessary here, but it is consistent with the codebase's pattern of defining BoxProps and extending them in page components. It also allows for future flexibility if we want to add more props later.
 interface Props extends BoxProps {}
+// React.FC<Props> and props: Props are redundant; use one or the other.
 const WalletPage: React.FC<Props> = (props: Props) => {
   // =========================================================================
   // ISSUE 3 — `children` is destructured but never used
